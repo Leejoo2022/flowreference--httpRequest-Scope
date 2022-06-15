@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="63395e01-ea59-4d05-a9f2-413f61dda20b" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="5f96b88f-4274-4ef5-ad8e-e5fb899219b0">
+		<http:request-connection host="localhost" port="8081" connectionIdleTimeout="3000000"/>
+	</http:request-config>
+	<flow name="flowreference-main-flow" doc:id="33f174f3-5e6c-4d1c-8283-19f6f5b4f8d1" >
+		<http:listener doc:name="Listener" doc:id="a21f727b-7171-461f-9589-ca8ea66ed12e" config-ref="HTTP_Listener_config" path="get-data-flowreference"/>
+		<file:read doc:name="ReadJSON" doc:id="8e2b0b73-7572-446b-8459-9b0f8c3a6017" path="C:\Mulesoft-Data's\airports.json" outputMimeType="application/json"/>
+		<set-variable value="#[payload.^mediaType]" doc:name="Set Variable" doc:id="fc491a16-d160-410f-802a-eb6a5c4e1947" variableName="mimeType-mainFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="2345f3cb-9d9a-4beb-910f-d00a5cdd9757" message="The main Flow payload MIME type is: #[payload.^mediaType]"/>
+		<flow-ref doc:name="Flow Reference" doc:id="94738bb3-e939-4977-898d-74a365156194" name="flowreference-private-flow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="665b6c77-8af2-4132-b077-50632ddc419b" message="data sent successfully"/>
+	</flow>
+	<flow name="flowreference-private-flow" doc:id="717ade43-7e07-4cf3-950f-316d1302de8b" >
+		<ee:transform doc:name="Transform Message" doc:id="c1e4b6ec-ffdd-404c-b826-169224c945c1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[payload.^mediaType]" doc:name="Set Variable" doc:id="9137d7c8-9569-4294-b426-24136fec27cd" variableName="mimeType-privateFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="1a128a7c-cf87-4436-8f93-19d668ce518f" message='The private Flow payload MIME type is: #[vars."mimeType-privateFlow"]'/>
+	</flow>
+	<flow name="flowreference-httprequest" doc:id="c13ac00e-aba9-42bc-ba7c-40ff851c4bec" >
+		<http:listener doc:name="Listener" doc:id="1da69f46-04af-4fbe-9234-a94bac326030" config-ref="HTTP_Listener_config" path="get-data-httprequest"/>
+		<file:read doc:name="ReadJSON" doc:id="50742d11-d983-47f1-812b-c6dc16e75d4b" path="C:\Mulesoft-Data's\airports.json"/>
+		<set-variable value="#[payload.^mediaType]" doc:name="Set Variable" doc:id="9fd0146a-7aa6-48d0-8604-fa12755970b3" variableName="httprequest-type"/>
+		<logger level="INFO" doc:name="Logger" doc:id="72b5a130-fa59-4425-979e-ae3790aa5994" message="The main Flow payload MIME type is: #[payload.^mediaType]"/>
+		<http:request method="GET" doc:name="Request" doc:id="c1095887-b3f9-4dcd-82f5-945a6d54402a" config-ref="HTTP_Request_configuration" path="/requested-flow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="8ad7cd35-6d71-47fe-ae29-782fb424df29" message="request sent successfully"/>
+	</flow>
+	<flow name="httprequest-requestedFlow" doc:id="a0aa8dca-aa9b-4f0c-b6c0-e159fd8f2189" >
+		<http:listener doc:name="Listener" doc:id="f5cfa4d7-1f9d-4a14-943a-55d1b5881e5a" config-ref="HTTP_Listener_config" path="/requested-flow"/>
+		<file:read doc:name="ReadCSV" doc:id="84f4f4db-01ee-45bd-baf6-02949c027a0c" path="C:\Mulesoft-Data's\airports.csv"/>
+		<set-variable value="#[payload.^mediaType]" doc:name="Set Variable" doc:id="99b81c54-985b-4fad-bf01-27ff9d9f1f9a" variableName="requestedvar"/>
+		<logger level="INFO" doc:name="Logger" doc:id="d10d3243-64b8-4908-8a58-a4c3c2c16ad9" message="requested flow completed"/>
+	</flow>
+</mule>
